@@ -1,40 +1,17 @@
-import importlib
-import subprocess
-import sys
-
-# Function to install package if not already installed
-def install_and_import(package, import_name=None):
-    try:
-        if import_name:
-            importlib.import_module(import_name)
-        else:
-            importlib.import_module(package)
-    except ImportError:
-        print(f"📦 Installing missing package: {package}...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-    finally:
-        return importlib.import_module(import_name if import_name else package)
-
-# Auto-install required packages
-st = install_and_import("streamlit")
-pd = install_and_import("pandas")
-deep_translator = install_and_import("deep-translator", "deep_translator")
-GoogleTranslator = deep_translator.GoogleTranslator
-nltk = install_and_import("nltk")
-sumy = install_and_import("sumy")
-docx = install_and_import("python-docx", "docx")
-reportlab = install_and_import("reportlab")
-
-# NLTK downloads (punkt + punkt_tab)
-nltk.download("punkt")
-nltk.download("punkt_tab")
-
+import streamlit as st
+import pandas as pd
+from deep_translator import GoogleTranslator
+import nltk
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+
+# Download required NLTK data
+nltk.download("punkt")
+nltk.download("punkt_tab")
 
 
 # ------------------- Text Summarization -------------------
