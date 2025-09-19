@@ -3,3 +3,4 @@ deep-translator
 sumy
 python-docx
 reportlab
+nltk
