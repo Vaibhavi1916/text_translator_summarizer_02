@@ -1,74 +1,106 @@
-import streamlit as st
-from deep_translator import GoogleTranslator
+import importlib
+import subprocess
+import sys
+
+# Function to install package if not already installed
+def install_and_import(package, import_name=None):
+    try:
+        if import_name:
+            importlib.import_module(import_name)
+        else:
+            importlib.import_module(package)
+    except ImportError:
+        print(f"📦 Installing missing package: {package}...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    finally:
+        return importlib.import_module(import_name if import_name else package)
+
+# Auto-install required packages
+st = install_and_import("streamlit")
+pd = install_and_import("pandas")
+deep_translator = install_and_import("deep-translator", "deep_translator")
+GoogleTranslator = deep_translator.GoogleTranslator
+nltk = install_and_import("nltk")
+sumy = install_and_import("sumy")
+docx = install_and_import("python-docx", "docx")
+reportlab = install_and_import("reportlab")
+
+# NLTK downloads (punkt + punkt_tab)
+nltk.download("punkt")
+nltk.download("punkt_tab")
+
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
-from io import BytesIO
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# ---------------- Summarization Function ---------------- #
-def summarize_text(text, num_sentences=3):
+
+# ------------------- Text Summarization -------------------
+def summarize_text(text, sentences_count=3):
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = LsaSummarizer()
-    summary = summarizer(parser.document, num_sentences)
+    summary = summarizer(parser.document, sentences_count)
     return " ".join(str(sentence) for sentence in summary)
 
-# ---------------- PDF Export ---------------- #
-def save_as_pdf(text):
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
+
+# ------------------- Save as Word -------------------
+def save_as_word(text, filename="summary.docx"):
+    doc = Document()
+    doc.add_heading("Text Summary", 0)
+    doc.add_paragraph(text)
+    doc.save(filename)
+
+
+# ------------------- Save as PDF -------------------
+def save_as_pdf(text, filename="summary.pdf"):
+    c = canvas.Canvas(filename, pagesize=letter)
     width, height = letter
-    text_object = c.beginText(50, height - 50)
+    c.drawString(50, height - 50, "Text Summary")
+    text_object = c.beginText(50, height - 80)
+    text_object.setFont("Times-Roman", 12)
+
     for line in text.split("\n"):
         text_object.textLine(line)
     c.drawText(text_object)
     c.save()
-    buffer.seek(0)
-    return buffer
 
-# ---------------- Word Export ---------------- #
-def save_as_word(text):
-    buffer = BytesIO()
-    doc = Document()
-    doc.add_paragraph(text)
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
 
-# ---------------- Streamlit UI ---------------- #
-st.set_page_config(page_title="Text Translator & Summarizer", page_icon="📘", layout="centered")
+# ------------------- Streamlit App -------------------
+def main():
+    st.title("Text Translator & Summarizer")
+    st.write("### Presented by Vaibhavi Zunzunkar - JD College")
 
-st.title("📘 Text Translator & Summarizer")
-st.write("### Presented by Vaibhavi Zunzunkar BT55 - JD College")
+    option = st.radio("Choose an option:", ["Enter Text", "Upload File"])
 
-option = st.radio("Choose an option:", ["Type Text", "Upload File"])
+    text_input = ""
+    if option == "Enter Text":
+        text_input = st.text_area("Enter your text here:")
+    elif option == "Upload File":
+        uploaded_file = st.file_uploader("Upload a text/CSV file", type=["txt", "csv"])
+        if uploaded_file:
+            if uploaded_file.type == "text/plain":
+                text_input = uploaded_file.read().decode("utf-8")
+            elif uploaded_file.type == "text/csv":
+                df = pd.read_csv(uploaded_file)
+                text_input = " ".join(df.astype(str).values.flatten())
 
-text_input = ""
+    if text_input:
+        if st.button("Summarize"):
+            summary = summarize_text(text_input)
+            st.subheader("Summary")
+            st.write(summary)
 
-if option == "Type Text":
-    text_input = st.text_area("✍️ Enter your text here", height=200)
+            save_as_word(summary, "summary.docx")
+            save_as_pdf(summary, "summary.pdf")
 
-elif option == "Upload File":
-    uploaded_file = st.file_uploader("📂 Upload a text file", type=["txt"])
-    if uploaded_file is not None:
-        text_input = uploaded_file.read().decode("utf-8")
+            with open("summary.docx", "rb") as f:
+                st.download_button("Download Word", f, file_name="summary.docx")
 
-if text_input:
-    st.subheader("🔍 Summary")
-    summary = summarize_text(text_input)
-    st.write(summary)
+            with open("summary.pdf", "rb") as f:
+                st.download_button("Download PDF", f, file_name="summary.pdf")
 
-    st.subheader("🌍 Translate Summary")
-    target_lang = st.selectbox("Select target language", ["en", "hi", "fr", "de", "es"])
-    translated = GoogleTranslator(source="auto", target=target_lang).translate(summary)
-    st.write(translated)
 
-    # ---------------- Download Buttons ---------------- #
-    st.subheader("⬇️ Download Options")
-    pdf_buffer = save_as_pdf(summary)
-    word_buffer = save_as_word(summary)
-
-    st.download_button("Download as PDF", data=pdf_buffer, file_name="summary.pdf", mime="application/pdf")
-    st.download_button("Download as Word", data=word_buffer, file_name="summary.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+if __name__ == "__main__":
+    main()
