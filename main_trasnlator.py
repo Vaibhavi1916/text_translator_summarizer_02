@@ -7,6 +7,7 @@ from io import BytesIO
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from deep_translator import GoogleTranslator
 
 # ---------------- Summarization Function ---------------- #
 def summarize_text(text, num_sentences=3):
