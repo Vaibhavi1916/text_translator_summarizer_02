@@ -1,5 +1,5 @@
 import streamlit as st
-from deep-translator import GoogleTranslator
+from deep_translator import GoogleTranslator
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
