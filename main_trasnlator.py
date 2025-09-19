@@ -4,7 +4,7 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from io import BytesIO
-from docx import Document
+from docx import Document 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import nltk
