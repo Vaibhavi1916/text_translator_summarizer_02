@@ -41,7 +41,7 @@ def save_as_word(text):
 st.set_page_config(page_title="Text Translator & Summarizer", page_icon="📘", layout="centered")
 
 st.title("📘 Text Translator & Summarizer")
-st.write("### Presented by Vaibhavi Zunzunkar BT55 - JD College")
+st.write("")
 
 option = st.radio("Choose an option:", ["Type Text", "Upload File"])
 
