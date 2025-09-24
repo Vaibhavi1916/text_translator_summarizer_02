@@ -1,7 +1,6 @@
 streamlit
-pandas
 deep-translator
-nltk
 sumy
 python-docx
 reportlab
+nltk
