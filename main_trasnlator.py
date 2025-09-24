@@ -7,6 +7,11 @@ from io import BytesIO
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import nltk
+
+# ---------------- NLTK Fix ---------------- #
+# Download sentence tokenizer data for sumy
+nltk.download("punkt")
 
 # ---------------- Summarization Function ---------------- #
 def summarize_text(text, num_sentences=3):
