@@ -10,15 +10,19 @@ from reportlab.pdfgen import canvas
 import nltk
 
 # ---------------- NLTK Fix ---------------- #
-# Download sentence tokenizer data for sumy
-nltk.download("punkt")
+# Ensure punkt + punkt_tab are available (newer NLTK requires both)
+nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
 
 # ---------------- Summarization Function ---------------- #
 def summarize_text(text, num_sentences=3):
-    parser = PlaintextParser.from_string(text, Tokenizer("english"))
-    summarizer = LsaSummarizer()
-    summary = summarizer(parser.document, num_sentences)
-    return " ".join(str(sentence) for sentence in summary)
+    try:
+        parser = PlaintextParser.from_string(text, Tokenizer("english"))
+        summarizer = LsaSummarizer()
+        summary = summarizer(parser.document, num_sentences)
+        return " ".join(str(sentence) for sentence in summary)
+    except Exception as e:
+        return f"⚠️ Summarization failed: {str(e)}"
 
 # ---------------- PDF Export ---------------- #
 def save_as_pdf(text):
@@ -65,15 +69,16 @@ if text_input:
     summary = summarize_text(text_input)
     st.write(summary)
 
-    st.subheader("🌍 Translate Summary")
-    target_lang = st.selectbox("Select target language", ["en", "hi", "fr", "de", "es"])
-    translated = GoogleTranslator(source="auto", target=target_lang).translate(summary)
-    st.write(translated)
+    if "⚠️" not in summary:  # only allow translation if summarization succeeded
+        st.subheader("🌍 Translate Summary")
+        target_lang = st.selectbox("Select target language", ["en", "hi", "fr", "de", "es"])
+        translated = GoogleTranslator(source="auto", target=target_lang).translate(summary)
+        st.write(translated)
 
-    # ---------------- Download Buttons ---------------- #
-    st.subheader("⬇️ Download Options")
-    pdf_buffer = save_as_pdf(summary)
-    word_buffer = save_as_word(summary)
+        # ---------------- Download Buttons ---------------- #
+        st.subheader("⬇️ Download Options")
+        pdf_buffer = save_as_pdf(summary)
+        word_buffer = save_as_word(summary)
 
-    st.download_button("Download as PDF", data=pdf_buffer, file_name="summary.pdf", mime="application/pdf")
-    st.download_button("Download as Word", data=word_buffer, file_name="summary.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        st.download_button("Download as PDF", data=pdf_buffer, file_name="summary.pdf", mime="application/pdf")
+        st.download_button("Download as Word", data=word_buffer, file_name="summary.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
